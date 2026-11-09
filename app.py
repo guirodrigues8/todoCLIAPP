@@ -4,7 +4,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-DB_PATH = Path.home() / ".todo.db"
+DB_PATH = Path.home() / ".todo.db" # "todo.db" Database file will be created in the user's home directory; use todo.db only to create a test database in the current directory.
 LARGURA = 40
 SEPARADOR = "#" * LARGURA
 
@@ -80,6 +80,11 @@ def adicionar_tarefa(conn, descricao):
     conn.execute("INSERT INTO tarefas (descricao) VALUES (?)", (descricao,))
     conn.commit()
 
+def alterar_tarefa(conn, tarefa_id, nova_descricao):
+    """Update the description of a task with the given ID."""
+    conn.execute("UPDATE tarefas SET descricao = ? WHERE id = ?", (nova_descricao, tarefa_id))
+    conn.commit()
+
 
 def procurar_tarefa(conn, descricao):
     """Return (id, concluida) of a task with the same description, or None.
@@ -140,8 +145,9 @@ def menu():
     titulo("TO-DO LIST")
     print(f"  {cor('1.', CYAN, BOLD)} Add a task")
     print(f"  {cor('2.', CYAN, BOLD)} Show tasks")
-    print(f"  {cor('3.', CYAN, BOLD)} Complete a task")
-    print(f"  {cor('4.', CYAN, BOLD)} Remove a task")
+    print(f"  {cor('3.', CYAN, BOLD)} Alter a task")
+    print(f"  {cor('4.', CYAN, BOLD)} Complete a task")
+    print(f"  {cor('5.', CYAN, BOLD)} Remove a task")
     print(f"  {cor('0.', RED, BOLD)} Exit")
     fim_bloco()
     return input("Choose an option: ").strip()
@@ -172,6 +178,38 @@ def acao_adicionar(conn):
     fim_bloco()
     return True
 
+def acao_alterar(conn):
+    limpar_ecra()
+    titulo("ALTER A TASK, 0 TO CANCEL")
+    if not mostrar_tarefas(conn):
+        fim_bloco()
+        return True
+
+    print()
+    try:
+        tarefa_id = int(input("Task number: "))
+    except ValueError:
+        erro("Please enter a valid task number.")
+        fim_bloco()
+        return True
+
+    if tarefa_id == 0:
+        return False
+
+    nova_descricao = input("New description: ").strip()
+    if not nova_descricao:
+        erro("Task description cannot be empty.")
+    elif not any(c.isalpha() for c in nova_descricao):
+        erro("The task must be a sentence, not just numbers or symbols.")
+    else:
+        existente = procurar_tarefa(conn, nova_descricao)
+        if existente and existente[0] != tarefa_id:
+            aviso(f"That task already exists (#{existente[0]}).")
+        else:
+            alterar_tarefa(conn, tarefa_id, nova_descricao)
+            sucesso("Task updated.")
+    fim_bloco()
+    return True
 
 def acao_mostrar(conn):
     limpar_ecra()
@@ -232,8 +270,10 @@ def main():
         elif escolha == "2":
             fazer_pausa = acao_mostrar(conn)
         elif escolha == "3":
-            fazer_pausa = acao_concluir_ou_remover(conn, concluir=True)
+            fazer_pausa = acao_alterar(conn)
         elif escolha == "4":
+            fazer_pausa = acao_concluir_ou_remover(conn, concluir=True)
+        elif escolha == "5":
             fazer_pausa = acao_concluir_ou_remover(conn, concluir=False)
         else:
             erro("Please choose one of the listed options.")
