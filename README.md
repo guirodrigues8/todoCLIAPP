@@ -4,7 +4,7 @@ A simple to-do list app for the terminal, written in Python. Tasks are saved in 
 
 ## Features
 
-- Add, list, complete and remove tasks from an interactive menu
+- Add, list, edit, complete, uncomplete and remove tasks from an interactive menu
 - Tasks are saved automatically in a SQLite database
 - Duplicate detection (ignores upper/lower case, accents and extra spaces)
 - Tasks must contain text, not just numbers or symbols
@@ -46,8 +46,10 @@ When you start the app you get this menu:
 ########################################
   1. Add a task
   2. Show tasks
-  3. Complete a task
-  4. Remove a task
+  3. Alter a task
+  4. Complete a task
+  5. Uncomplete a task
+  6. Remove a task
   0. Exit
 ########################################
 Choose an option:
@@ -57,8 +59,10 @@ Choose an option:
 | ------ | ------------ |
 | `1` | Add a new task |
 | `2` | Show all tasks and how many are completed |
-| `3` | Mark a task as completed (you choose it by its number) |
-| `4` | Remove a task (you choose it by its number) |
+| `3` | Change a task's description (you choose it by its number) |
+| `4` | Mark a task as completed (you choose it by its number) |
+| `5` | Mark a completed task as pending (you choose it by its number) |
+| `6` | Remove a task (you choose it by its number) |
 | `0` | Exit the app |
 
 ## Run it from anywhere (Linux / macOS)

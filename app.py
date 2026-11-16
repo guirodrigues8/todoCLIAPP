@@ -4,7 +4,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-DB_PATH = Path.home() / ".todo.db" # "todo.db" Database file will be created in the user's home directory; use todo.db only to create a test database in the current directory.
+DB_PATH = Path.home() / ".todo.db" # "todo.db" Database file will be created in the user's home directory; use "todo.db" only to create a test database in the current directory.
 LARGURA = 40
 SEPARADOR = "#" * LARGURA
 
@@ -111,6 +111,12 @@ def concluir_tarefa(conn, tarefa_id):
     return cur.rowcount > 0
 
 
+def desconcluir_tarefa(conn, tarefa_id):
+    cur = conn.execute("UPDATE tarefas SET concluida = 0 WHERE id = ?", (tarefa_id,))
+    conn.commit()
+    return cur.rowcount > 0
+
+
 def remover_tarefa(conn, tarefa_id):
     row = conn.execute(
         "SELECT descricao FROM tarefas WHERE id = ?", (tarefa_id,)
@@ -147,7 +153,8 @@ def menu():
     print(f"  {cor('2.', CYAN, BOLD)} Show tasks")
     print(f"  {cor('3.', CYAN, BOLD)} Alter a task")
     print(f"  {cor('4.', CYAN, BOLD)} Complete a task")
-    print(f"  {cor('5.', CYAN, BOLD)} Remove a task")
+    print(f"  {cor('5.', CYAN, BOLD)} Uncomplete a task")
+    print(f"  {cor('6.', CYAN, BOLD)} Remove a task")
     print(f"  {cor('0.', RED, BOLD)} Exit")
     fim_bloco()
     return input("Choose an option: ").strip()
@@ -219,10 +226,14 @@ def acao_mostrar(conn):
     return True
 
 
-def acao_concluir_ou_remover(conn, concluir):
+def acao_concluir_ou_desconcluir_ou_remover(conn, acao):
     limpar_ecra()
     titulo(
-        "COMPLETE A TASK, 0 TO CANCEL" if concluir else "REMOVE A TASK, PUT 0 TO CANCEL"
+        {
+            "concluir": "COMPLETE A TASK, 0 TO CANCEL",
+            "desconcluir": "UNCOMPLETE A TASK, 0 TO CANCEL",
+            "remover": "REMOVE A TASK, PUT 0 TO CANCEL",
+        }[acao]
     )
     if not mostrar_tarefas(conn):
         fim_bloco()
@@ -239,9 +250,14 @@ def acao_concluir_ou_remover(conn, concluir):
     if tarefa_id == 0:
         return False
 
-    if concluir:
+    if acao == "concluir":
         if concluir_tarefa(conn, tarefa_id):
             sucesso("Task completed.")
+        else:
+            erro("That task number does not exist.")
+    elif acao == "desconcluir":
+        if desconcluir_tarefa(conn, tarefa_id):
+            sucesso("Task marked as pending.")
         else:
             erro("That task number does not exist.")
     else:
@@ -272,9 +288,11 @@ def main():
         elif escolha == "3":
             fazer_pausa = acao_alterar(conn)
         elif escolha == "4":
-            fazer_pausa = acao_concluir_ou_remover(conn, concluir=True)
+            fazer_pausa = acao_concluir_ou_desconcluir_ou_remover(conn, "concluir")
         elif escolha == "5":
-            fazer_pausa = acao_concluir_ou_remover(conn, concluir=False)
+            fazer_pausa = acao_concluir_ou_desconcluir_ou_remover(conn, "desconcluir")
+        elif escolha == "6":
+            fazer_pausa = acao_concluir_ou_desconcluir_ou_remover(conn, "remover")
         else:
             erro("Please choose one of the listed options.")
             fazer_pausa = True
